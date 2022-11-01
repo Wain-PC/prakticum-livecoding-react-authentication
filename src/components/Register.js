@@ -1,9 +1,9 @@
 import React, {useState} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, Redirect} from 'react-router-dom';
 import Logo from './Logo.js';
 import './styles/Register.css';
 
-const Register = ({onRegister}) => {
+const Register = ({isLoggedId, onRegister}) => {
     const [userData, setUserData] = useState({
         username: '',
         email: '',
@@ -26,6 +26,11 @@ const Register = ({onRegister}) => {
             err => setMessage(err.message || 'Что-то пошло не так')
         )
     }
+
+    if (isLoggedId) {
+        return <Redirect to="/"/>;
+    }
+
     return (
         <div className="registerContainer">
             <div className="register">
@@ -61,7 +66,7 @@ const Register = ({onRegister}) => {
                 </form>
                 <div className="register__signin">
                     <p>Уже зарегистрированы?</p>
-                    <Link to="login" className="register__login-link">Войти</Link>
+                    <Link to="/login" className="register__login-link">Войти</Link>
                 </div>
             </div>
         </div>

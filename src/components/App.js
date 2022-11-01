@@ -16,28 +16,30 @@ const App = () => {
     const [loggedIn, setLoggedIn] = useState(false);
     const [loading, setLoading] = useState(true);
 
+    const cbAuthenticate = useCallback((data) => {
+        localStorage.setItem('jwt', data.jwt)
+        setLoggedIn(true)
+        setUserData(data.user);
+    }, []);
+
     const cbLogin = useCallback(async ({username, password}) => {
         try {
             const data = await duckAuth.authorize(username, password);
             if (!data) throw new Error('Неверные имя пользователя или пароль')
             if (data.jwt) {
-                localStorage.setItem('jwt', data.jwt)
-                setLoggedIn(true)
-                setUserData(data.user);
+                cbAuthenticate(data);
             }
         } finally {
             setLoading(false)
         }
 
-    }, []);
+    }, [cbAuthenticate]);
 
     const cbRegister = useCallback(async ({username, password, email}) => {
         const res = await duckAuth.register({username, password, email});
-        if (!res || res.statusCode !== 200) {
-            throw new Error('Что-то пошло не так');
-        }
+        cbAuthenticate(res);
         return res;
-    }, []);
+    }, [cbAuthenticate]);
 
     const cbLogout = useCallback(() => {
         setLoggedIn(false);
@@ -61,7 +63,9 @@ const App = () => {
         }
     }, []);
 
-    useEffect(cbTokenCheck, [cbTokenCheck]);
+    useEffect(() => {
+        cbTokenCheck()
+    }, [cbTokenCheck]);
 
     if (loading) {
         return '...Loading';
@@ -76,7 +80,7 @@ const App = () => {
                 <Login isLoggedId={loggedIn} onLogin={cbLogin}/>
             </Route>
             <Route path="/register">
-                <Register onRegister={cbRegister}/>
+                <Register isLoggedId={loggedIn} onRegister={cbRegister}/>
             </Route>
             <Route>
                 {loggedIn ? <Redirect to="/ducks"/> : <Redirect to="/login"/>}
