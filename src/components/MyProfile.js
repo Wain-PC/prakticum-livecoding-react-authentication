@@ -1,10 +1,13 @@
 import React from 'react';
+import NavBar from './NavBar.js';
 import './styles/MyProfile.css';
 
 function MyProfile(props) {
+    console.log({props})
     let {username, email} = props.userData;
     return (
         <>
+            <NavBar/>
             <div className="my-profile">
                 <div className="my-profile__container">
                     <div className="my-profile__header">

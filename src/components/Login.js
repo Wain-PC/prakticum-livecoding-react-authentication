@@ -1,55 +1,74 @@
-import React, {useState} from 'react';
-import {Link, Redirect} from 'react-router-dom';
+import React from 'react';
+import {Link, withRouter} from 'react-router-dom';
 import Logo from './Logo.js';
+import * as duckAuth from '../duckAuth.js';
 import './styles/Login.css';
 
-const Login = ({isLoggedId, onLogin}) => {
-    const [userData, setUserData] = useState({
-        username: '',
-        password: ''
-    })
-    const [message, setMessage] = useState('')
+class Login extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            username: '',
+            password: '',
+            message: ''
+        }
+        this.handleChange = this.handleChange.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
 
-    const handleChange = (e) => {
+    }
+
+    handleChange(e) {
         const {name, value} = e.target;
-        setUserData({
-            ...userData,
+        this.setState({
             [name]: value
-        })
+        });
     }
-    const handleSubmit = (e) => {
+
+    handleSubmit(e) {
         e.preventDefault();
-        onLogin(userData)
-            .catch(err => setMessage(err.message || 'Что-то пошло не так'));
+        if (!this.state.username || !this.state.password) {
+            return;
+        }
+        duckAuth.authorize(this.state.username, this.state.password)
+            .then((data) => {
+                if (!data) {
+                    return this.setState({
+                        message: 'Что-то пошло не так!'
+                    });
+                }
+                if (data.jwt) {
+                    this.setState({email: '', password: '', message: ''}, () => {
+                        this.props.handleLogin();
+                        this.props.history.push('/ducks');
+
+                    })
+                }
+            })
+            .catch(err => console.log(err));
     }
 
-    if (isLoggedId) {
-        return <Redirect to='/'/>;
-    }
-
-    return (
-
-        <div className="loginContainer">
-            <div onSubmit={handleSubmit} className="login">
+    render() {
+        return (
+            <div onSubmit={this.handleSubmit} className="login">
                 <Logo title={'CryptoDucks'}/>
                 <p className="login__welcome">
                     Это приложение содержит конфиденциальную информацию.
                     Пожалуйста, войдите или зарегистрируйтесь, чтобы получить доступ к CryptoDucks.
                 </p>
                 <p className="login__error">
-                    {message}
+                    {this.state.message}
                 </p>
                 <form className="login__form">
-                    <label htmlFor="username">
+                    <label for="username">
                         Логин:
                     </label>
-                    <input id="username" required name="username" type="text" value={userData.username}
-                           onChange={handleChange}/>
-                    <label htmlFor="password">
+                    <input id="username" required name="username" type="text" value={this.state.username}
+                           onChange={this.handleChange}/>
+                    <label for="password">
                         Пароль:
                     </label>
-                    <input id="password" required name="password" type="password" value={userData.password}
-                           onChange={handleChange}/>
+                    <input id="password" required name="password" type="password" value={this.state.password}
+                           onChange={this.handleChange}/>
                     <div className="login__button-container">
                         <button type="submit" className="login__link">Войти</button>
                     </div>
@@ -60,8 +79,8 @@ const Login = ({isLoggedId, onLogin}) => {
                     <Link to="/register" className="signup__link">Зарегистрироваться</Link>
                 </div>
             </div>
-        </div>
-    )
+        )
+    }
 }
 
-export default Login;
+export default withRouter(Login);
